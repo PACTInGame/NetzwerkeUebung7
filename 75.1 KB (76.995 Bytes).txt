@@ -1,0 +1,101 @@
+75.1 KB (76.995 Bytes)
+
+Verschiedene geräte, keine manuellen fehler, 40 ms timeout: 
+
+359810
+
+Bei 50 ms:
+
+256057
+
+Bei 60 ms:
+
+324010
+
+Bei 80 ms:
+
+242075
+
+Bei 90 ms:
+
+256858
+
+Bei 100 ms: (erstes, wo es nicht mehr zu dupacks kam)
+
+243610
+
+
+Localhost, keine manuellen Fehler, 20 ms timeout:
+
+7199
+
+30 ms
+
+6920
+
+40 ms
+
+5737
+
+50 ms
+
+6031
+
+60 ms
+
+5968
+
+70 ms
+
+5899
+
+80 ms
+
+6162
+
+90 ms
+
+5601
+
+100 ms
+
+6649
+
+
+localhost, 5% fehlerquote bei allem:
+
+5 ms
+
+53865
+
+10 ms
+
+52896
+
+20 ms
+
+90800
+
+30 ms
+
+101491
+
+40 ms
+
+139486
+
+
+70 ms
+
+211471
+
+
+100 ms
+
+279500
+
+Localhost, 30% Fehlerqoute:
+
+10 ms
+
+449523
