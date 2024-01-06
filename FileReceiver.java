@@ -16,7 +16,7 @@ public class FileReceiver {
     public FileReceiver() throws IOException {
         // Assuming the same port as in FileSender
         int port = 9876;
-        InetAddress inetAddress = InetAddress.getByName("192.168.0.9");
+        InetAddress inetAddress = InetAddress.getByName("192.168.0.11");
         this.socket = new DatagramSocket(port, inetAddress);
         this.state = State.WAIT_FOR_SEQ_0;
         File receivedDir = new File("received");
