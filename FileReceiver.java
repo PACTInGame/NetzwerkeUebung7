@@ -16,7 +16,8 @@ public class FileReceiver {
     public FileReceiver() throws IOException {
         // Assuming the same port as in FileSender
         int port = 9876;
-        this.socket = new DatagramSocket(port);
+        InetAddress inetAddress = InetAddress.getByName("192.168.0.9");
+        this.socket = new DatagramSocket(port, inetAddress);
         this.state = State.WAIT_FOR_SEQ_0;
         File receivedDir = new File("received");
         if (!receivedDir.exists()) {
@@ -37,7 +38,7 @@ public class FileReceiver {
     private void sendAck(int seqNum) throws IOException {
 
         byte[] ackPacket = new byte[]{'A', (byte) seqNum};
-        InetAddress ipAddress = InetAddress.getByName("127.0.0.1"); // Assuming localhost for ACKs
+        InetAddress ipAddress = InetAddress.getByName("192.168.0.9"); // Assuming localhost for ACKs
         int ackPort = 9877;
         DatagramPacket packet = new DatagramPacket(ackPacket, ackPacket.length, ipAddress, ackPort);
         System.out.println("Sending ACK " + seqNum);

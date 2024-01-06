@@ -100,6 +100,6 @@ public class FileSender {
 
     public static void main(String[] args) throws IOException {
         FileSender fileSender = new FileSender();
-        fileSender.send("longTest.txt", "127.0.0.1");
+        fileSender.send("longTest.txt", "192.168.0.11");
     }
 }
