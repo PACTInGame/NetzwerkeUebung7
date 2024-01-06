@@ -15,7 +15,7 @@ public class FileSender {
     public FileSender() throws SocketException {
         int ackPort = 9877;
         this.socket = new DatagramSocket(ackPort);
-        int timeoutMS = 40;
+        int timeoutMS = 10;
         this.socket.setSoTimeout(timeoutMS);
     }
 

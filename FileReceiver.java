@@ -108,11 +108,19 @@ public class FileReceiver {
     }
     public void receiveFile() throws IOException {
         byte[] receiveData = new byte[3]; // Assuming packet structure [SEQ_NUM, DATA, CHECKSUM]
-
+        long receive_time_start = 0;
+        long receive_time_end = 0;
         while (true) {
+            if (receive_time_start == 0){
+                receive_time_start = System.currentTimeMillis();
+            }
+            else{
+                receive_time_end = System.currentTimeMillis();
+                System.out.println(receive_time_end-receive_time_start);
+            }
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
             socket.receive(receivePacket);
-            int result = badlyBehavedPipe(receiveData, 5, 5, 5);
+            int result = badlyBehavedPipe(receiveData, 30, 30, 30);
             final int LOST_FLAG = 1;
             final int FAULT_FLAG = 2;
             final int DUPLICATE_FLAG = 4;
