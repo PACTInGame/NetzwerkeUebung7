@@ -8,6 +8,7 @@ public class FileReceiver {
         WAIT_FOR_SEQ_0, WAIT_FOR_SEQ_1
     }
 
+    private final boolean debug = false;
 
     private final DatagramSocket socket;
     private State state;
@@ -40,7 +41,8 @@ public class FileReceiver {
         InetAddress ipAddress = InetAddress.getByName("127.0.0.1"); // Assuming localhost for ACKs
         int ackPort = 9877;
         DatagramPacket packet = new DatagramPacket(ackPacket, ackPacket.length, ipAddress, ackPort);
-        System.out.println("Sending ACK " + seqNum);
+        if (debug)
+            System.out.println("Sending ACK " + seqNum);
         socket.send(packet);
     }
 
@@ -76,29 +78,31 @@ public class FileReceiver {
         byte seqNum = receiveData[0];
         byte data = receiveData[1];
         byte checksum = receiveData[2];
-        System.out.println("Received Packet with seqNum " + seqNum);
-        System.out.println("PacketData = " + data);
+        if (debug) {
+            System.out.println("Received Packet with seqNum " + seqNum);
+            System.out.println("PacketData = " + data);
+        }
         if (seqNum == 0 || seqNum == 1) {
             switch (state) {
                 case WAIT_FOR_SEQ_0:
-                    System.out.println("Waiting for SEQ 0");
+                    if (debug)
+                        System.out.println("Waiting for SEQ 0");
                     if (seqNum == 0 && isChecksumValid(data, checksum)) {
                         fileOutputStream.write(data);
                         sendAck(0);
                         state = State.WAIT_FOR_SEQ_1;
                     } else if (seqNum == 1 && isChecksumValid(data, checksum)) {
-                        System.out.println("resending ack");
                         sendAck(1);
                     }
                     break;
                 case WAIT_FOR_SEQ_1:
-                    System.out.println("Waiting for SEQ 1");
+                    if (debug)
+                        System.out.println("Waiting for SEQ 1");
                     if (seqNum == 1 && isChecksumValid(data, checksum)) {
                         fileOutputStream.write(data);
                         sendAck(1);
                         state = State.WAIT_FOR_SEQ_0;
                     } else if (seqNum == 0 && isChecksumValid(data, checksum)) {
-                        System.out.println("resending ack");
                         sendAck(0);
                     }
 
@@ -109,18 +113,25 @@ public class FileReceiver {
     public void receiveFile() throws IOException {
         byte[] receiveData = new byte[3]; // Assuming packet structure [SEQ_NUM, DATA, CHECKSUM]
         long receive_time_start = 0;
-        long receive_time_end = 0;
+        long receive_time_end;
+        socket.setSoTimeout(5000);
         while (true) {
-            if (receive_time_start == 0){
-                receive_time_start = System.currentTimeMillis();
-            }
-            else{
-                receive_time_end = System.currentTimeMillis();
-                System.out.println(receive_time_end-receive_time_start);
-            }
+
             DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            socket.receive(receivePacket);
-            int result = badlyBehavedPipe(receiveData, 30, 30, 30);
+            try{
+                socket.receive(receivePacket);
+                if (receive_time_start == 0){
+                    receive_time_start = System.currentTimeMillis();
+                }
+            } catch (SocketTimeoutException e) {
+                System.out.println("Receiving took:");
+                receive_time_end = System.currentTimeMillis() - 5000;
+                System.out.println(receive_time_end-receive_time_start + "ms");
+                System.out.println("Therefore Goodput is: " + 1955/((receive_time_end-receive_time_start)/1000) + "KB/s");
+                break;
+            }
+
+            int result = badlyBehavedPipe(receiveData, 0, 0, 0);
             final int LOST_FLAG = 1;
             final int FAULT_FLAG = 2;
             final int DUPLICATE_FLAG = 4;

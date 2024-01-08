@@ -11,11 +11,12 @@ public class FileSender {
     private final DatagramSocket socket;
     private InetAddress ipAddress;
     private State state = State.WAIT_FOR_CALL_0;
+    private final boolean debug = false;
 
     public FileSender() throws SocketException {
         int ackPort = 9877;
         this.socket = new DatagramSocket(ackPort);
-        int timeoutMS = 10;
+        int timeoutMS = 100;
         this.socket.setSoTimeout(timeoutMS);
     }
 
@@ -34,7 +35,8 @@ public class FileSender {
     }
 
     private void sendPacket(byte[] packet) throws IOException {
-        System.out.println("Sending Packet with seqNum" + packet[0]);
+        if (debug)
+            System.out.println("Sending Packet with seqNum" + packet[0]);
         int port = 9876;
         DatagramPacket datagramPacket = new DatagramPacket(packet, packet.length, ipAddress, port);
         socket.send(datagramPacket);
@@ -54,7 +56,8 @@ public class FileSender {
                     while (!receivedAck) {
                         sendPacket(packet);
                         state = State.WAIT_FOR_ACK_0;
-                        System.out.println("State: WAIT_FOR_ACK_0");
+                        if (debug)
+                            System.out.println("State: WAIT_FOR_ACK_0");
                         if (receiveAck(0)) {
                             state = State.WAIT_FOR_CALL_1;
                             seqNum = 1 - seqNum;
@@ -67,7 +70,8 @@ public class FileSender {
                     while (!receivedAck) {
                         sendPacket(packet);
                         state = State.WAIT_FOR_ACK_1;
-                        System.out.println("State: WAIT_FOR_ACK_1");
+                        if (debug)
+                            System.out.println("State: WAIT_FOR_ACK_1");
                         if (receiveAck(1)) {
                             state = State.WAIT_FOR_CALL_0;
                             seqNum = 1 - seqNum;
@@ -83,7 +87,8 @@ public class FileSender {
     }
 
     private boolean receiveAck(int expectedSeqNum) {
-        System.out.println("Waiting to receive ACK " + expectedSeqNum);
+        if (debug)
+            System.out.println("Waiting to receive ACK " + expectedSeqNum);
         byte[] ackPacket = new byte[2];
         DatagramPacket packet = new DatagramPacket(ackPacket, ackPacket.length);
         try {
@@ -91,7 +96,8 @@ public class FileSender {
             // Simple ACK format: [ACK, SEQ_NUM]
             return ackPacket[0] == 'A' && ackPacket[1] == (byte) expectedSeqNum;
         } catch (SocketTimeoutException e) {
-            System.out.println("Timeout occurred");
+            if (debug)
+                System.out.println("Timeout occurred");
             return false; // Timeout occurred
         } catch (IOException e) {
             return false;
