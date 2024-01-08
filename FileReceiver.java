@@ -26,7 +26,7 @@ public class FileReceiver {
                 System.out.println("Failed to create the directory. Check your rights.");
             }
         }
-        File file = new File(receivedDir, "received_file");
+        File file = new File(receivedDir, "received_file.jpg");
         this.fileOutputStream = new FileOutputStream(file);
     }
 
