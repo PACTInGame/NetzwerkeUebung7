@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.*;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 
 public class FileSender {
 
@@ -11,7 +13,7 @@ public class FileSender {
     private final DatagramSocket socket;
     private InetAddress ipAddress;
     private State state = State.WAIT_FOR_CALL_0;
-    private final boolean debug = false;
+    private final boolean debug = true;
 
     public FileSender() throws SocketException {
         int ackPort = 9877;
@@ -25,18 +27,29 @@ public class FileSender {
         send_file(fileName);
     }
 
-    private int createChecksumForData(byte data) {
-        // simple checksum logic (for illustration)
-        return data % 256;
+    private long createChecksumForData(byte[] data) {
+        Checksum checksum = new Adler32();
+
+        checksum.update(data, 0, data.length);
+
+        return checksum.getValue();
+
     }
 
-    private byte[] makePacket(int seqNum, byte data, int checksum) {
-        return new byte[]{(byte) seqNum, data, (byte) checksum};
+    private byte[] makePacket(int seqNum, byte[] data, long checksum) {
+        byte[] result = new byte[data.length + 2];
+        result[0] = (byte) seqNum;
+        result[1] = (byte) checksum;
+        System.arraycopy(data, 0, result, 2, data.length);
+        return result;
     }
 
     private void sendPacket(byte[] packet) throws IOException {
-        if (debug)
+        if (debug) {
             System.out.println("Sending Packet with seqNum" + packet[0]);
+            System.out.println("Packet looks like:" + packet[0]+ packet[1]+ packet[2]);
+            System.out.println(packet.length);
+        }
         int port = 9876;
         DatagramPacket datagramPacket = new DatagramPacket(packet, packet.length, ipAddress, port);
         socket.send(datagramPacket);
@@ -46,10 +59,15 @@ public class FileSender {
         FileInputStream fis = new FileInputStream(fileName);
         int seqNum = 0;
         int dataByte;
+        byte[] sendData = new byte[500];
         while ((dataByte = fis.read()) != -1) {
-            byte data = (byte) dataByte;
-            int checksum = createChecksumForData(data);
-            byte[] packet = makePacket(seqNum, data, checksum);
+            sendData[0] = (byte) dataByte;
+            int packetPos = 1;
+            while ((dataByte = fis.read()) != - 1 && packetPos < 500)
+                sendData[packetPos++] = (byte) dataByte;
+
+            long checksum = createChecksumForData(sendData);
+            byte[] packet = makePacket(seqNum, sendData, checksum);
             boolean receivedAck = false;
             switch (state) {
                 case WAIT_FOR_CALL_0:

@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
 import java.util.Random;
+import java.util.zip.Adler32;
+import java.util.zip.Checksum;
 
 public class FileReceiver {
 
@@ -8,7 +10,7 @@ public class FileReceiver {
         WAIT_FOR_SEQ_0, WAIT_FOR_SEQ_1
     }
 
-    private final boolean debug = false;
+    private final boolean debug = true;
 
     private final DatagramSocket socket;
     private State state;
@@ -30,11 +32,14 @@ public class FileReceiver {
         this.fileOutputStream = new FileOutputStream(file);
     }
 
-    private boolean isChecksumValid(byte data, byte checksum) {
-        // simple checksum validation (for illustration)
-        return (data % 256) == checksum;
-    }
+    private boolean isChecksumValid(byte[] data, long checksum) {
+        Checksum checksumAdler = new Adler32();
+        checksumAdler.update(data, 0, data.length);
+        System.out.println("ChecksumAdler=" + checksumAdler.getValue());
+        System.out.println("Checksum rcvd=" + checksum);
+        return (byte) checksumAdler.getValue() == checksum;
 
+    }
     private void sendAck(int seqNum) throws IOException {
 
         byte[] ackPacket = new byte[]{'A', (byte) seqNum};
@@ -76,11 +81,15 @@ public class FileReceiver {
 
     public void processReceivedData(byte[] receiveData) throws IOException {
         byte seqNum = receiveData[0];
-        byte data = receiveData[1];
-        byte checksum = receiveData[2];
+        byte checksum = receiveData[1];
+        int length = receiveData.length-2;
+        byte[] data = new byte[length];
+        System.out.println("Packet looks like:" + receiveData[0]+ receiveData[1]+ receiveData[2]);
+        System.arraycopy(receiveData, 2, data, 0, length);
+        System.out.println(receiveData.length);
         if (debug) {
             System.out.println("Received Packet with seqNum " + seqNum);
-            System.out.println("PacketData = " + data);
+            //System.out.println("PacketData = " + data);
         }
         if (seqNum == 0 || seqNum == 1) {
             switch (state) {
@@ -111,7 +120,7 @@ public class FileReceiver {
         }
     }
     public void receiveFile() throws IOException {
-        byte[] receiveData = new byte[3]; // Assuming packet structure [SEQ_NUM, DATA, CHECKSUM]
+        byte[] receiveData = new byte[502]; // Assuming packet structure [SEQ_NUM, CHECKSUM,  DATA[500]]
         long receive_time_start = 0;
         long receive_time_end;
         socket.setSoTimeout(5000);
